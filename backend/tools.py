@@ -6,9 +6,9 @@ from twilio.rest import Client
 # ---------------- MedGemma AI ----------------
 def query_medgemma(prompt: str) -> str:
     system_prompt = """
-You are Cortax, a warm, experienced, and ethical emotional support guide.
-Respond empathetically and calmly.
-Never diagnose or prescribe; always encourage professional help when needed.
+You are Cortax, a calm, ethical emotional support guide.
+Never claim to contact emergency services.
+If user is in distress, encourage professional help.
 """
     try:
         response = ollama.chat(
@@ -17,40 +17,37 @@ Never diagnose or prescribe; always encourage professional help when needed.
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
             ],
-            options={"num_predict": 350, "temperature": 0.7, "top_p": 0.9}
+            options={"num_predict": 300, "temperature": 0.7}
         )
         return response["message"]["content"].strip()
     except Exception:
-        return "I'm having a little trouble responding right now. Please try again in a moment."
+        return "I'm having trouble responding right now. Please try again."
 
 # ---------------- Emergency Call ----------------
 def call_emergency(emergency_contact: str) -> bool:
-    """Place a call using Twilio. Returns True if successful."""
     try:
-        TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-        TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-        TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER")
+        sid = os.environ.get("TWILIO_ACCOUNT_SID")
+        token = os.environ.get("TWILIO_AUTH_TOKEN")
+        from_number = os.environ.get("TWILIO_FROM_NUMBER")
 
-        if not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_FROM_NUMBER):
-            print("❌ Twilio credentials missing in environment")
+        if not all([sid, token, from_number]):
+            print("❌ Twilio ENV missing")
             return False
 
-        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        client = Client(sid, token)
         call = client.calls.create(
             to=emergency_contact,
-            from_=TWILIO_FROM_NUMBER,
+            from_=from_number,
             url="https://demo.twilio.com/docs/voice.xml"
         )
-        return True if getattr(call, "sid", None) else False
+
+        print("📞 Call SID:", call.sid)
+        return True
+
     except Exception as e:
-        print("call_emergency error:", e)
+        print("❌ call_emergency error:", e)
         return False
 
 # ---------------- Verified Contact ----------------
 def get_verified_contact_for_user(user_id: str) -> Optional[str]:
-    env_contact = os.getenv("EMERGENCY_CONTACT")
-    if env_contact:
-        return env_contact
-
-    fallback = {"local_test_user": "+918273333639"}  # replace with real number
-    return fallback.get(user_id)
+    return os.environ.get("EMERGENCY_CONTACT")
