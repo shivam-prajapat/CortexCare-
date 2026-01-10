@@ -1,3 +1,5 @@
+ENABLE_EMERGENCY_CALLS = False  #  temporarily disabled
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -40,9 +42,9 @@ async def ask(query: Query):
     if detect_emergency(user_text):
         contact = get_verified_contact_for_user(query.user_id)
         call_success = False
-
-        if contact:
+        if ENABLE_EMERGENCY_CALLS and contact:
             call_success = call_emergency(contact)
+
 
         crisis_prompt = f"""
 User said: "{user_text}"
