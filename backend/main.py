@@ -4,7 +4,6 @@ load_dotenv()
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
-
 from backend.tools import query_medgemma, call_emergency, get_verified_contact_for_user
 
 app = FastAPI(title="CortexCare API")
@@ -54,7 +53,6 @@ Encourage them to stay alive and seek help.
 Do NOT mention phone calls, emergency systems, or automation.
 Do NOT give instructions for self-harm.
 """
-
         reply = query_medgemma(crisis_prompt)
 
         return {
